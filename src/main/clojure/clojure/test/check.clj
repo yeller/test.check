@@ -31,17 +31,37 @@
   [value]
   (and value (not (instance? Throwable value))))
 
-(defn make-stopper [stop-options]
-  (let [num-tests stop-options]
-    (fn
+(defn numeric-stopper [num-tests]
+  (fn
     ([] num-tests)
     ([so-far]
      (if (== so-far num-tests)
        :complete
-       (inc so-far))))))
+       (inc so-far)))))
+
+(defn- ^long ms-to-nanos [ms]
+  (long (/ ms 1000000)))
+
+(defn time-limiting-stopper [ms]
+  (let [nanos (ms-to-nanos ms)]
+    (fn
+      ([] (System/nanoTime))
+      ([so-far]
+       (let [curr (System/nanoTime)]
+         (if (< curr nanos)
+           :complete
+           curr))))))
+
+(defn- make-stopper [stop-options]
+  (if (number? stop-options)
+    (numeric-stopper stop-options)
+    (if (and (map? stop-options)
+             (number? (:ms stop-options)))
+      (time-limiting-stopper (:ms stop-options))
+      (assert false (str "couldn't determine what stop options to use, from " (pr-str stop-options) " pass a number to stop after a certain number of test runs, or a map {:ms 100} with a number of milliseconds to stop after that number of millisecond.")))))
 
 (defn quick-check
-  "Tests `property` `num-tests` times.
+  "Tests `property` until `stop-options` determine testing should stop.
   Takes optional keys `:seed` and `:max-size`. The seed parameter
   can be used to re-run previous tests, as the seed used is returned
   after a test is run. The max-size can be used to control the 'size'
@@ -55,10 +75,10 @@
       (def p (for-all [a gen/pos-int] (> (* a a) a)))
       (quick-check 100 p)
   "
-  [num-tests property & {:keys [seed max-size] :or {max-size 200}}]
+  [stop-options property & {:keys [seed max-size] :or {max-size 200}}]
   (let [[created-seed rng] (make-rng seed)
         size-seq (gen/make-size-range-seq max-size)
-        stopper (make-stopper num-tests)]
+        stopper (make-stopper stop-options)]
     (loop [so-far (stopper)
            tests-run 0
            size-seq size-seq]
