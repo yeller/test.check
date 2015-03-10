@@ -48,7 +48,7 @@
       ([] (System/nanoTime))
       ([so-far]
        (let [curr (System/nanoTime)]
-         (if (< curr nanos)
+         (if (>= curr nanos)
            :complete
            curr))))))
 
