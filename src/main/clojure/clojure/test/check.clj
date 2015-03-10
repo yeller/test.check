@@ -82,7 +82,8 @@
     (loop [so-far (stopper)
            tests-run 0
            size-seq size-seq]
-      (if (= so-far :complete)
+      (if (and (>= num-tests 1)
+               (= so-far :complete))
         (complete property tests-run created-seed)
         (let [[size & rest-size-seq] size-seq
               result-map-rose (gen/call-gen property rng size)
