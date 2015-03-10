@@ -91,7 +91,7 @@
               args (:args result-map)]
           (if (not-falsey-or-exception? result)
             (do
-              (ct/report-trial property tests-run num-tests)
+              (ct/report-trial property so-far stop-options)
               (recur (stopper so-far) (inc tests-run) rest-size-seq))
             (failure property result-map-rose tests-run size created-seed)))))))
 
