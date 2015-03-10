@@ -31,6 +31,15 @@
   [value]
   (and value (not (instance? Throwable value))))
 
+(defn make-stopper [stop-options]
+  (let [num-tests stop-options]
+    (fn
+    ([] num-tests)
+    ([so-far]
+     (if (== so-far num-tests)
+       :complete
+       (inc so-far))))))
+
 (defn quick-check
   "Tests `property` `num-tests` times.
   Takes optional keys `:seed` and `:max-size`. The seed parameter
@@ -48,11 +57,13 @@
   "
   [num-tests property & {:keys [seed max-size] :or {max-size 200}}]
   (let [[created-seed rng] (make-rng seed)
-        size-seq (gen/make-size-range-seq max-size)]
-    (loop [so-far 0
+        size-seq (gen/make-size-range-seq max-size)
+        stopper (make-stopper num-tests)]
+    (loop [so-far (stopper)
+           tests-run 0
            size-seq size-seq]
-      (if (== so-far num-tests)
-        (complete property num-tests created-seed)
+      (if (= so-far :complete)
+        (complete property tests-run created-seed)
         (let [[size & rest-size-seq] size-seq
               result-map-rose (gen/call-gen property rng size)
               result-map (rose/root result-map-rose)
@@ -60,9 +71,9 @@
               args (:args result-map)]
           (if (not-falsey-or-exception? result)
             (do
-              (ct/report-trial property so-far num-tests)
-              (recur (inc so-far) rest-size-seq))
-            (failure property result-map-rose so-far size created-seed)))))))
+              (ct/report-trial property tests-run num-tests)
+              (recur (stopper so-far) (inc tests-run) rest-size-seq))
+            (failure property result-map-rose tests-run size created-seed)))))))
 
 (defn- smallest-shrink
   [total-nodes-visited depth smallest]
