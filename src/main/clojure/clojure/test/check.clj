@@ -39,8 +39,8 @@
        :complete
        (inc so-far)))))
 
-(defn- ^long ms-to-nanos [ms]
-  (long (/ ms 1000000)))
+(defn- ms-to-nanos [ms]
+  (/ ms 1000000))
 
 (defn time-limiting-stopper [ms]
   (let [nanos (ms-to-nanos ms)]
@@ -82,7 +82,7 @@
     (loop [so-far (stopper)
            tests-run 0
            size-seq size-seq]
-      (if (and (>= num-tests 1)
+      (if (and (>= tests-run 1)
                (= so-far :complete))
         (complete property tests-run created-seed)
         (let [[size & rest-size-seq] size-seq
