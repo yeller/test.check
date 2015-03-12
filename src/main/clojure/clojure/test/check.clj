@@ -39,18 +39,18 @@
        :complete
        (inc so-far)))))
 
-(defn- ms-to-nanos [ms]
-  (/ ms 1000000))
+(defn- ms->nanos [ms]
+  (* ms 1000000))
 
 (defn time-limiting-stopper [ms]
-  (let [nanos (ms-to-nanos ms)]
+  (let [nanos (ms->nanos ms)]
     (fn
       ([] (System/nanoTime))
       ([so-far]
-       (let [curr (System/nanoTime)]
-         (if (>= curr nanos)
+       (let [distance (- (System/nanoTime) so-far)]
+         (if (>= distance nanos)
            :complete
-           curr))))))
+           so-far))))))
 
 (defn- make-stopper [stop-options]
   (if (number? stop-options)
