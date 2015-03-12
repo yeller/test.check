@@ -24,7 +24,7 @@
   [options]
   (cond (nil? options) {:num-tests *default-test-count*}
         (number? options) {:num-tests options}
-        (map? options) (if (:num-tests options)
+        (map? options) (if (or (:ms options) (:num-tests options))
                          options
                          (assoc options :num-tests *default-test-count*))
         :else (throw (ex-info (str "Invalid defspec options: " (pr-str options))
@@ -51,7 +51,9 @@
                           :test `#(#'assert-check (assoc (~name)
                                                     :test-var (str '~name))))
           ([] (let [options# (process-options ~options)]
-                (apply ~name (:num-tests options#) (apply concat options#))))
+                (if (:ms options#)
+                  (apply ~name options# (apply concat options#))
+                  (apply ~name (:num-tests options#) (apply concat options#)))))
           ([~'times & {:keys [~'seed ~'max-size] :as ~'quick-check-opts}]
              (apply
               clojure.test.check/quick-check
