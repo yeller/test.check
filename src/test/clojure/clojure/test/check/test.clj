@@ -510,6 +510,11 @@
                         (gen/vector gen/nat 100000)
                         1))))))
 
+;; running to times rather than iterations
+;; --------------------------------------------------------------------------
+
+(defspec run-to-time {:ms 10} (prop/for-all* [gen/int] (constantly true)))
+
 ;; defspec macro
 ;; ---------------------------------------------------------------------------
 
