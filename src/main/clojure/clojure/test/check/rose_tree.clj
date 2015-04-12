@@ -3,8 +3,23 @@
   (:refer-clojure :exclude [filter remove seq])
   (:require [clojure.core :as core]))
 
+(deftype RoseTree [root children]
+  clojure.lang.Indexed
+  (nth [this i]
+    (if (= i 0)
+      root
+      (if (= i 1)
+        children
+        (throw (java.lang.IndexOutOfBoundsException.)))))
+  (nth [this i not-found]
+    (if (= i 0)
+      root
+      (if (= i 1)
+        children
+        not-found))))
+
 (defn make-rose [root children]
-  [root children])
+  (RoseTree. root children))
 
 (defn- exclude-nth
   "Exclude the nth value in a collection."
